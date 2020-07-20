@@ -16,8 +16,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // Add after body parser initialization!
 app.use(expressValidator());
 
-
+//controllers
 require('./controllers/posts.js')(app);
+require('./controllers/comments.js')(app);
 //databse configuration
 require('./db/config');
 
