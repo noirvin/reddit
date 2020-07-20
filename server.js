@@ -1,7 +1,12 @@
+//secretkey and auth
+require('dotenv').config();
+var cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+//express init
 var path = require('path');
 const express = require('express')
 const app = express()
-var cookieParser = require('cookie-parser');
+app.use(cookieParser());// Add this after you initialize express.
 // require handlebars
 const exphbs = require('express-handlebars');
 const Handlebars = require('handlebars')
@@ -19,6 +24,7 @@ app.use(expressValidator());
 //controllers
 require('./controllers/posts.js')(app);
 require('./controllers/comments.js')(app);
+require('./controllers/auth.js')(app);
 //databse configuration
 require('./db/config');
 
