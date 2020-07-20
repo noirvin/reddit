@@ -4,10 +4,24 @@ const app = express()
 var cookieParser = require('cookie-parser');
 // require handlebars
 const exphbs = require('express-handlebars');
+const bodyParser = require('body-parser');
 
-// Use "main" as our default layout
+const expressValidator = require('express-validator');
+// Use Body Parser
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// Add after body parser initialization!
+app.use(expressValidator());
+
+
+require('./controllers/posts.js')(app);
+//databse configuration
+require('./db/config');
+
+
 app.set('views', path.join(__dirname, 'views/layouts'));
-// Use "main" as our default layout
+
 app.engine( 'handlebars', exphbs( {
   extname: 'handlebars',
   defaultLayout: false,
