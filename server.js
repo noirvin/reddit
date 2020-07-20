@@ -25,6 +25,7 @@ app.use(expressValidator());
 require('./controllers/posts.js')(app);
 require('./controllers/comments.js')(app);
 require('./controllers/auth.js')(app);
+require('./controllers/replies.js')(app);
 //databse configuration
 require('./db/config');
 

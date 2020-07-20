@@ -1,91 +1,78 @@
-// test/posts.js
-const app = require("./../server");
-const chai = require("chai");
-const chaiHttp = require("chai-http");
-const expect = chai.expect;
-const agent = chai.request.agent(app);
-
-// Import the Post model from our models folder so we
-// we can use it in our tests.
+const app = require('express');
+const User = require('../models/user');
 const Post = require('../models/post');
-const server = require('../server');
 
-chai.should();
-chai.use(chaiHttp);
+module.exports = (app) => {
 
-describe('Posts', function() {
-  const agent = chai.request.agent(server);
-  // Post that we'll use for testing purposes
-  const newPost = {
-      title: 'post title',
-      url: 'https://www.google.com',
-      summary: 'post summary'
-  };
-  const user = {
-    username: 'poststest',
-    password: 'testposts'
-    };
-    before(function (done) {
-  agent
-    .post('/sign-up')
-    .set("content-type", "application/x-www-form-urlencoded")
-    .send(user)
-    .then(function (res) {
-      done();
+    // GET request
+    app.get('/posts/new', (req, res) => {
+		var currentUser = req.user;
+		if (req.user) {
+		  res.render('posts-new', { currentUser });
+		} else {
+			res.redirect('/');
+		}
     })
-    .catch(function (err) {
-      done(err);
-    });
-});
-  it('Should create with valid attributes at POST /posts/new', function(done) {
-  // Checks how many posts there are now
-  Post.estimatedDocumentCount()
-    .then(function (initialDocCount) {
-        agent
-            .post("/posts/new")
-            // This line fakes a form post,
-            // since we're not actually filling out a form
-            .set("content-type", "application/x-www-form-urlencoded")
-            // Make a request to create another
-            .send(newPost)
-            .then(function (res) {
-                Post.estimatedDocumentCount()
-                    .then(function (newDocCount) {
-                        // Check that the database has one more post in it
-                        expect(res).to.have.status(200);
-                        // Check that the database has one more post in it
-                        expect(newDocCount).to.be.equal(initialDocCount + 1)
-                        done();
-                    })
-                    .catch(function (err) {
-                        done(err);
-                    });
-            })
-            .catch(function (err) {
-                done(err);
-            });
-    })
-    .catch(function (err) {
-        done(err);
-    });
-});
-after(function (done) {
-  Post.findOneAndDelete(newPost)
-  .then(function (res) {
-      agent.close()
 
-      User.findOneAndDelete({
-          username: user.username
-      })
-        .then(function (res) {
-            done()
+	// CREATE
+    app.post("/posts/new", (req, res) => {
+        if (req.user) {
+            var post = new Post(req.body);
+            post.author = req.user._id;
+
+            post
+                .save()
+                .then(post => {
+                    return User.findById(req.user._id);
+                })
+                .then(user => {
+                    user.posts.unshift(post);
+                    user.save();
+                    // REDIRECT TO THE NEW POST
+                    res.redirect(`/posts/${post._id}`);
+                })
+                .catch(err => {
+                    console.log(err.message);
+                });
+        } else {
+            return res.status(401); // UNAUTHORIZED
+        }
+    });
+		// INDEX
+    app.get('/', (req, res) => {
+        var currentUser = req.user;
+        // res.render('home', {});
+        console.log(req.cookies);
+        Post.find().populate('author').lean()
+        .then(posts => {
+            res.render('posts-index', { posts, currentUser });
+            // res.render('home', {});
+        }).catch(err => {
+            console.log(err.message);
         })
-        .catch(function (err) {
-            done(err);
-        });
-  })
-  .catch(function (err) {
-      done(err);
-  });
-});
-});
+	})
+
+	// SHOW
+	app.get("/posts/:id", function (req, res) {
+		var currentUser = req.user;
+		Post.findById(req.params.id).populate('comments').lean()
+			.then(post => {
+				res.render("posts-show", { post, currentUser });
+			})
+			.catch(err => {
+				console.log(err.message);
+			});
+	});
+
+	// SUBREDDIT
+	app.get("/n/:subreddit", function (req, res) {
+		var currentUser = req.user;
+		Post.find({ subreddit: req.params.subreddit }).lean()
+			.then(posts => {
+				res.render("posts-index", { posts, currentUser });
+			})
+			.catch(err => {
+				console.log(err);
+			});
+	});
+};
