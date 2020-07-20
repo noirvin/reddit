@@ -8,7 +8,11 @@ const exphbs = require('express-handlebars');
 // Use "main" as our default layout
 app.set('views', path.join(__dirname, 'views/layouts'));
 // Use "main" as our default layout
-app.engine('handlebars', exphbs({ defaultLayout: false }));
+app.engine( 'handlebars', exphbs( {
+  extname: 'handlebars',
+  defaultLayout: false,
+  partialsDir: __dirname + '/views/partials/'
+}));
 // Use handlebars to render
 app.set('view engine', 'handlebars');
 
