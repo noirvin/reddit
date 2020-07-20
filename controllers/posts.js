@@ -1,11 +1,12 @@
+const app = require('express');
 const Post = require('../models/post');
 
-module.exports = (app) => {
+module.exports = app => {
 
     // GET request
     app.get('/posts/new', (req, res) => {
 		  res.render('posts-new');
-	
+
     })
 
   // CREATE
@@ -19,5 +20,23 @@ module.exports = (app) => {
       return res.redirect(`/`);
     })
   });
-
+  app.get('/', (req, res) => {
+      Post.find({}).lean()
+      .then(posts => {
+      res.render("posts-index",{posts});
+  })
+  .catch(err => {
+      console.log(err.message);
+  });
+});
+app.get("/posts/:id", (req, res) => {
+ // LOOK UP THE POST
+ Post.findById(req.params.id)
+   .then(post => {
+     res.render("posts-show", {post});
+   })
+   .catch(err => {
+     console.log(err.message);
+   });
+});
 };
